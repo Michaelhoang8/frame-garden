@@ -1,9 +1,179 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Frame Garden · Memory in motion</title><link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script></head>
-<body><header><a class="brand" href="/">✳ <span>FRAME GARDEN</span></a><span class="edition">OPERATING SYSTEMS / FIELD NOTES 01</span><a href="https://github.com/Michaelhoang8/frame-garden">Source ↗</a></header>
-<main><section class="hero"><div><p class="eyebrow">A LITTLE ROOM. A LOT TO REMEMBER.</p><h1>Make space for<br><em>what comes next.</em></h1></div><p>Four replacement policies.<br>One memory trace.<br>See what stays, and why.</p></section>
-<section class="workspace" aria-label="Memory experiment"><form id="experiment"><div class="section-label"><h2>Plant a workload</h2><span>01</span></div><label for="sample">Example trace</label><select id="sample"><option value="anomaly">More memory, more faults</option><option value="locality">A small working set</option><option value="writes">Dirty pages & writebacks</option></select><label for="trace">Page accesses</label><textarea id="trace" rows="5" maxlength="12000" spellcheck="false" aria-describedby="trace-help">1 2 3 4 1 2 5 1 2 3 4 5</textarea><p class="help" id="trace-help">Separate pages with spaces or commas. Add <code>w</code> for a write: <code>3w</code>. Plain numbers are reads.</p><div class="configuration"><div><label for="capacity">Memory frames</label><input id="capacity" type="number" min="1" max="16" step="1" value="3" required></div><button class="primary" type="submit">Grow the trace <span>↗</span></button></div><p id="notice" role="status" aria-live="polite">Ready to explore.</p><details><summary>Trace files & reports</summary><label class="file-label" for="import">Import a plain-text trace<input id="import" type="file" accept=".txt,.csv,text/plain,text/csv"></label><button type="button" id="export-trace">Save trace ↓</button><button type="button" id="export-report">Save analysis JSON ↓</button><p class="help">Files stay in your browser. Up to 1,000 accesses; 16 frames. A CSV file here means comma-separated page tokens, without a header.</p></details></form>
-<div class="experiment-view"><div class="section-label"><h2>The memory bed</h2><label class="policy-label" for="policy">Policy <select id="policy"><option>FIFO</option><option>LRU</option><option>CLOCK</option><option>OPT</option></select></label></div><p id="policy-note" class="policy-note"></p><div id="frames" class="frames" aria-label="Memory frames"></div><div class="playback"><div class="transport"><button id="back" type="button" aria-label="Previous access">←</button><button id="play" type="button">Play</button><button id="next" type="button" aria-label="Next access">→</button></div><label for="position">Access <output id="position-label">0 / 12</output></label><input id="position" type="range" min="0" max="12" value="0" aria-label="Access position"></div><div class="explanation"><span id="outcome" class="eyebrow">EMPTY MEMORY</span><p id="explanation"></p><p id="eviction" class="help"></p></div><div class="metrics"><div><strong id="faults">0</strong><span>PAGE FAULTS</span></div><div><strong id="hits">0</strong><span>HITS</span></div><div><strong id="writes">0</strong><span>WRITEBACKS</span></div></div></div></section>
-<section class="comparison"><div class="section-label"><h2>A different way to remember</h2><span>02 / COMPLETE TRACE</span></div><p class="intro">Final results at the chosen capacity. Step playback above does not change these totals.</p><div id="results" class="results"></div><details class="sweep"><summary>Does more memory help? Explore the capacity sweep</summary><p class="help">Page faults across frame counts. An ↑ marks a policy getting worse than at the previous capacity.</p><div class="table-wrap"><table><caption>Full-trace page faults by memory capacity</caption><thead><tr><th scope="col">Frames</th><th scope="col">FIFO</th><th scope="col">LRU</th><th scope="col">Clock</th><th scope="col">Optimum</th></tr></thead><tbody id="sweep"></tbody></table></div><p id="anomalies"></p></details></section>
-<section class="method"><p class="eyebrow">WHAT YOU'RE SEEING</p><h2>Memory is a choice<br>made over and over.</h2><div><p>This model starts empty. Each miss loads one page. A dirty page writes back when evicted; dirty pages still resident at the end are counted separately, without a forced flush.</p><p>Clock uses one reference bit per frame. The hand clears set bits until it finds a victim. The offline optimum knows the entire future trace and minimizes faults, not writebacks.</p><p>This is an educational demand-paging model, not a hardware benchmark. It does not model TLBs, prefetching, disk latency, or real operating-system performance.</p><a href="https://pages.cs.wisc.edu/~solomon/cs537-old/last/paging.html">Read the paging background ↗</a></div></section>
-</main><footer><span>GROW UNDERSTANDING, ONE ACCESS AT A TIME.</span><span>No dependencies. No account. All local.</span></footer></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Frame Garden · Memory in motion</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">✳ <span>FRAME GARDEN</span></a
+      ><span class="edition">OPERATING SYSTEMS / FIELD NOTES 01</span
+      ><a href="https://github.com/Michaelhoang8/frame-garden">Source ↗</a>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">A LITTLE ROOM. A LOT TO REMEMBER.</p>
+          <h1>Make space for<br /><em>what comes next.</em></h1>
+        </div>
+        <p>Four replacement policies.<br />One memory trace.<br />See what stays, and why.</p>
+      </section>
+      <section class="workspace" aria-label="Memory experiment">
+        <form id="experiment">
+          <div class="section-label">
+            <h2>Plant a workload</h2>
+            <span>01</span>
+          </div>
+          <label for="sample">Example trace</label
+          ><select id="sample">
+            <option value="anomaly">More memory, more faults</option>
+            <option value="locality">A small working set</option>
+            <option value="writes">Dirty pages & writebacks</option></select
+          ><label for="trace">Page accesses</label
+          ><textarea
+            id="trace"
+            rows="5"
+            maxlength="12000"
+            spellcheck="false"
+            aria-describedby="trace-help"
+          >
+1 2 3 4 1 2 5 1 2 3 4 5</textarea
+          >
+          <p class="help" id="trace-help">
+            Separate pages with spaces or commas. Add <code>w</code> for a write: <code>3w</code>.
+            Plain numbers are reads.
+          </p>
+          <div class="configuration">
+            <div>
+              <label for="capacity">Memory frames</label
+              ><input id="capacity" type="number" min="1" max="16" step="1" value="3" required />
+            </div>
+            <button class="primary" type="submit">Grow the trace <span>↗</span></button>
+          </div>
+          <p id="notice" role="status" aria-live="polite">Ready to explore.</p>
+          <details>
+            <summary>Trace files & reports</summary>
+            <label class="file-label" for="import"
+              >Import a plain-text trace<input
+                id="import"
+                type="file"
+                accept=".txt,.csv,text/plain,text/csv" /></label
+            ><button type="button" id="export-trace">Save trace ↓</button
+            ><button type="button" id="export-report">Save analysis JSON ↓</button>
+            <p class="help">
+              Files stay in your browser. Up to 1,000 accesses; 16 frames. A CSV file here means
+              comma-separated page tokens, without a header.
+            </p>
+          </details>
+        </form>
+        <div class="experiment-view">
+          <div class="section-label">
+            <h2>The memory bed</h2>
+            <label class="policy-label" for="policy"
+              >Policy
+              <select id="policy">
+                <option>FIFO</option>
+                <option>LRU</option>
+                <option>CLOCK</option>
+                <option>OPT</option>
+              </select></label
+            >
+          </div>
+          <p id="policy-note" class="policy-note"></p>
+          <div id="frames" class="frames" aria-label="Memory frames"></div>
+          <div class="playback">
+            <div class="transport">
+              <button id="back" type="button" aria-label="Previous access">←</button
+              ><button id="play" type="button">Play</button
+              ><button id="next" type="button" aria-label="Next access">→</button>
+            </div>
+            <label for="position">Access <output id="position-label">0 / 12</output></label
+            ><input
+              id="position"
+              type="range"
+              min="0"
+              max="12"
+              value="0"
+              aria-label="Access position"
+            />
+          </div>
+          <div class="explanation">
+            <span id="outcome" class="eyebrow">EMPTY MEMORY</span>
+            <p id="explanation"></p>
+            <p id="eviction" class="help"></p>
+          </div>
+          <div class="metrics">
+            <div><strong id="faults">0</strong><span>PAGE FAULTS</span></div>
+            <div><strong id="hits">0</strong><span>HITS</span></div>
+            <div><strong id="writes">0</strong><span>WRITEBACKS</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="comparison">
+        <div class="section-label">
+          <h2>A different way to remember</h2>
+          <span>02 / COMPLETE TRACE</span>
+        </div>
+        <p class="intro">
+          Final results at the chosen capacity. Step playback above does not change these totals.
+        </p>
+        <div id="results" class="results"></div>
+        <details class="sweep">
+          <summary>Does more memory help? Explore the capacity sweep</summary>
+          <p class="help">
+            Page faults across frame counts. An ↑ marks a policy getting worse than at the previous
+            capacity.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Full-trace page faults by memory capacity
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Frames</th>
+                  <th scope="col">FIFO</th>
+                  <th scope="col">LRU</th>
+                  <th scope="col">Clock</th>
+                  <th scope="col">Optimum</th>
+                </tr>
+              </thead>
+              <tbody id="sweep"></tbody>
+            </table>
+          </div>
+          <p id="anomalies"></p>
+        </details>
+      </section>
+      <section class="method">
+        <p class="eyebrow">WHAT YOU'RE SEEING</p>
+        <h2>Memory is a choice<br />made over and over.</h2>
+        <div>
+          <p>
+            This model starts empty. Each miss loads one page. A dirty page writes back when
+            evicted; dirty pages still resident at the end are counted separately, without a forced
+            flush.
+          </p>
+          <p>
+            Clock uses one reference bit per frame. The hand clears set bits until it finds a
+            victim. The offline optimum knows the entire future trace and minimizes faults, not
+            writebacks.
+          </p>
+          <p>
+            This is an educational demand-paging model, not a hardware benchmark. It does not model
+            TLBs, prefetching, disk latency, or real operating-system performance.
+          </p>
+          <a href="https://pages.cs.wisc.edu/~solomon/cs537-old/last/paging.html"
+            >Read the paging background ↗</a
+          >
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>GROW UNDERSTANDING, ONE ACCESS AT A TIME.</span
+      ><span>No dependencies. No account. All local.</span>
+    </footer>
+  </body>
+</html>
