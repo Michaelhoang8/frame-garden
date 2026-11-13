@@ -4,6 +4,10 @@ A dependency-free operating-systems workbench for exploring how page replacement
 
 ![Frame Garden](docs/workbench.png)
 
+## Interface
+
+The main view shows a selectable access sequence, memory-frame slots, playback, and the current operation result. Frame color marks the accessed slot; dirty state and Clock reference bits remain visible. Workload editing and trace files open separately, while full-trace policy comparison stays below the memory view.
+
 ## Start
 
 ```sh

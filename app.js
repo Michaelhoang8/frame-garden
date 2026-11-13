@@ -25,7 +25,7 @@ function invalidate() {
   report = null;
   position = 0;
   render();
-  notice('Inputs changed. Grow the trace to update the analysis.');
+  notice('Inputs changed. Analyze the trace to update results.');
 }
 function build() {
   revision++;
@@ -34,6 +34,7 @@ function build() {
     const next = analyze($('trace').value, Number($('capacity').value));
     report = next;
     position = 0;
+    renderAccesses();
     render();
     notice(`Analyzed ${report.trace.length} accesses across four policies.`);
   } catch (error) {
@@ -53,15 +54,25 @@ function render() {
   $('position').value = position;
   $('position-label').textContent = `${position} / ${report?.trace.length ?? 0}`;
   if (!ready) {
+    $('accesses').replaceChildren();
     $('frames').replaceChildren();
     $('results').replaceChildren();
     $('sweep').replaceChildren();
     $('anomalies').textContent = '';
     $('outcome').textContent = 'ANALYSIS PENDING';
-    $('explanation').textContent = 'Grow your trace to inspect memory.';
+    $('explanation').textContent = 'Analyze a trace to inspect memory.';
     $('eviction').textContent = '';
     for (const id of ['hits', 'faults', 'writes']) $(id).textContent = '—';
     return;
+  }
+  for (const button of $('accesses').children)
+    button.setAttribute('aria-current', String(Number(button.dataset.position) === position));
+  const active = $('accesses').querySelector('[aria-current="true"]');
+  if (active) {
+    const box = $('accesses').getBoundingClientRect(),
+      item = active.getBoundingClientRect();
+    if (item.left < box.left) $('accesses').scrollLeft += item.left - box.left;
+    else if (item.right > box.right) $('accesses').scrollLeft += item.right - box.right;
   }
   const result = report.results[policy],
     step = result.steps[position - 1],
@@ -122,6 +133,7 @@ function download(name, text, type) {
 $('experiment').addEventListener('submit', (event) => {
   event.preventDefault();
   build();
+  if (report) $('workload-panel').close();
 });
 for (const id of ['trace', 'capacity']) $(id).addEventListener('input', invalidate);
 $('sample').addEventListener('change', () => {
@@ -188,6 +200,7 @@ $('import').addEventListener('change', async () => {
     $('trace').value = text;
     report = candidate;
     position = 0;
+    renderAccesses();
     render();
     notice('Trace imported and analyzed.');
   } catch (error) {
@@ -196,3 +209,29 @@ $('import').addEventListener('change', async () => {
   }
 });
 build();
+
+function renderAccesses() {
+  $('accesses').replaceChildren(
+    ...report.trace.map((access, i) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.position = i + 1;
+      button.textContent = String(access.page) + (access.write ? 'w' : '');
+      button.setAttribute(
+        'aria-label',
+        `Access ${i + 1}: ${access.write ? 'write' : 'read'} page ${access.page}`,
+      );
+      button.onclick = () => {
+        stop();
+        position = i + 1;
+        render();
+      };
+      return button;
+    }),
+  );
+}
+$('workload-open').onclick = () => {
+  stop();
+  $('workload-panel').showModal();
+};
+$('workload-close').onclick = () => $('workload-panel').close();
