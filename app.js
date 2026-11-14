@@ -79,12 +79,24 @@ function render() {
     frames = step?.frames ?? Array(report.capacity).fill(null);
   $('back').disabled = position === 0;
   $('next').disabled = position === report.trace.length;
+  const previousPages = [...$('frames').children].map((frame) => frame.dataset.page);
   $('frames').innerHTML = frames
     .map(
       (f, i) =>
-        `<div class="frame ${f ? 'occupied' : ''} ${f?.dirty ? 'dirty' : ''} ${step?.slot === i ? 'active' : ''} ${policy === 'CLOCK' && (step?.hand ?? 0) === i ? 'hand' : ''}"><small>FRAME ${i + 1}</small><span class="page-number">${f?.page ?? '·'}</span><span class="frame-meta">${f ? (f.dirty ? 'DIRTY' : 'CLEAN') + (policy === 'CLOCK' ? ` / R=${Number(f.referenced)}` : '') : 'EMPTY'}</span></div>`,
+        `<div data-page="${f?.page ?? ''}" class="frame page-${f ? f.page % 6 : 'empty'} ${f ? 'occupied' : ''} ${f?.dirty ? 'dirty' : ''} ${step?.slot === i ? 'active' : ''} ${policy === 'CLOCK' && (step?.hand ?? 0) === i ? 'hand' : ''}"><small>FRAME ${i + 1}</small><span class="page-number">${f?.page ?? '·'}</span><span class="frame-meta">${f ? (f.dirty ? 'DIRTY' : 'CLEAN') + (policy === 'CLOCK' ? ` / R=${Number(f.referenced)}` : '') : 'EMPTY'}</span></div>`,
     )
     .join('');
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+    [...$('frames').children].forEach((frame, i) => {
+      if (frame.dataset.page && frame.dataset.page !== previousPages[i])
+        frame.querySelector('.page-number').animate(
+          [
+            { opacity: 0, transform: 'translateY(10px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: 260, easing: 'ease-out' },
+        );
+    });
   $('outcome').textContent = step
     ? `${step.access.write ? 'WRITE' : 'READ'} PAGE ${step.access.page} / ${step.hit ? 'HIT' : 'PAGE FAULT'}`
     : 'EMPTY MEMORY';

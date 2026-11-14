@@ -8,6 +8,8 @@ A dependency-free operating-systems workbench for exploring how page replacement
 
 The main view shows a selectable access sequence, memory-frame slots, playback, and the current operation result. Frame color marks the accessed slot; dirty state and Clock reference bits remain visible. Workload editing and trace files open separately, while full-trace policy comparison stays below the memory view.
 
+Resident pages carry a consistent accent across slots and policies, with a separate dirty-state indicator. A page entering a different slot animates briefly; hits on unchanged pages remain still. Page numbers remain the identifiers because accents repeat. Reduced-motion preferences disable entrance animation.
+
 ## Start
 
 ```sh
